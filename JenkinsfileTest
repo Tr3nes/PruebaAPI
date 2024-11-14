@@ -6,7 +6,7 @@ pipeline {
                 script {
                     // Construir la imagen y ejecutar las pruebas
                     try {
-                        sh 'docker build -t api-image3 .'
+                        sh 'docker build -t api-image .'
                     } catch (Exception err) {
                         error("Error en la construcción o pruebas. Revisa el Dockerfile y los test.")
                     }
@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     // Ejecutar el contenedor en segundo plano
-                    sh 'docker run -d --name api-container3 -p 8080:8080 api-image'
+                    sh 'docker run -d --name api-container -p 8080:8080 api-image'
                     // Esperar a que la API esté en funcionamiento
                     sleep 10
                 }
