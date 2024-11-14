@@ -18,26 +18,50 @@ pipeline {
                 script {
                     // Ejecutar el contenedor en segundo plano
                     sh 'docker run -d --name api-container -p 8083:8083 api-image'
-                    // Esperar a que la API esté en funcionamiento
+                    
+                    // Verificar que el contenedor está corriendo y el puerto 8083 está mapeado
+                    def containerPorts = sh(script: "docker ps --filter 'name=api-container' --format '{{.Ports}}'", returnStdout: true).trim()
+                    echo "Contenedor puerto mapeado: ${containerPorts}"
+                    
+                    // Verificar que el puerto 8083 está mapeado
+                    if (!containerPorts.contains("0.0.0.0:8083->8083/tcp")) {
+                        error("El puerto 8083 no está correctamente mapeado. Verifica la configuración del contenedor.")
+                    }
+
+                    // Esperar un tiempo adicional para asegurarse de que la API esté lista
                     sleep 20
                 }
             }
         }
-    stage('Integration Tests') {
-        steps {
-            script {
-                def containerStatus = sh(script: "docker inspect -f '{{.State.Running}}' api-container", returnStdout: true).trim()
-                if (containerStatus == 'true') {
-                    sh 'curl -f http://localhost:8083/activities'
-                } else {
-                    sh 'docker logs api-container'  // Ver logs en caso de fallo
-                    error 'El contenedor de la API no se está ejecutando correctamente.'
+        stage('Integration Tests') {
+            steps {
+                script {
+                    // Verificar si el contenedor está corriendo
+                    def containerStatus = sh(script: "docker inspect -f '{{.State.Running}}' api-container", returnStdout: true).trim()
+                    if (containerStatus == 'true') {
+                        // Intentar realizar la solicitud
+                        def retries = 10
+                        def success = false
+                        for (int i = 0; i < retries; i++) {
+                            try {
+                                sh 'curl -f http://localhost:8083/activities'
+                                success = true
+                                break
+                            } catch (Exception e) {
+                                echo "Intento ${i + 1} fallido. Reintentando en 5 segundos..."
+                                sleep 5
+                            }
+                        }
+                        if (!success) {
+                            error 'La API no respondió después de varios intentos.'
+                        }
+                    } else {
+                        sh 'docker logs api-container'  // Ver logs en caso de fallo
+                        error 'El contenedor de la API no se está ejecutando correctamente.'
+                    }
                 }
             }
         }
-    }
-
-
     }
     post {
         always {
