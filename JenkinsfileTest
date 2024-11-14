@@ -30,11 +30,13 @@ pipeline {
                 if (containerStatus == 'true') {
                     sh 'curl -f http://localhost:8083/activities'
                 } else {
+                    sh 'docker logs api-container'  // Ver logs en caso de fallo
                     error 'El contenedor de la API no se está ejecutando correctamente.'
                 }
             }
         }
     }
+
 
     }
     post {
