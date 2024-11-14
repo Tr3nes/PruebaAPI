@@ -23,23 +23,19 @@ pipeline {
                 }
             }
         }
-        stage('Integration Tests') {
-            steps {
-                script {
-                    // Realizar pruebas de integración con `curl`
-                    try {
-                        // Prueba de un endpoint, por ejemplo, GET /activities
-                        sh 'curl -f http://localhost:8083/activities'
-                        
-                        // Prueba de otro endpoint, por ejemplo, POST /activities
-                        sh 'curl -X POST -H "Content-Type: application/json" -d \'{"name":"New Activity"}\' http://localhost:8083/activities'
-                        
-                    } catch (Exception err) {
-                        error("Error en las pruebas de integración. Verifica los endpoints.")
-                    }
+    stage('Integration Tests') {
+        steps {
+            script {
+                def containerStatus = sh(script: "docker inspect -f '{{.State.Running}}' api-container", returnStdout: true).trim()
+                if (containerStatus == 'true') {
+                    sh 'curl -f http://localhost:8083/activities'
+                } else {
+                    error 'El contenedor de la API no se está ejecutando correctamente.'
                 }
             }
         }
+    }
+
     }
     post {
         always {
