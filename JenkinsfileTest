@@ -17,9 +17,9 @@ pipeline {
             steps {
                 script {
                     // Ejecutar el contenedor en segundo plano
-                    sh 'docker run -d --name api-container -p 8080:8080 api-image'
+                    sh 'docker run -d --name api-container -p 8083:8083 api-image'
                     // Esperar a que la API esté en funcionamiento
-                    sleep 10
+                    sleep 20
                 }
             }
         }
@@ -29,10 +29,10 @@ pipeline {
                     // Realizar pruebas de integración con `curl`
                     try {
                         // Prueba de un endpoint, por ejemplo, GET /activities
-                        sh 'curl -f http://localhost:8080/activities'
+                        sh 'curl -f http://localhost:8083/activities'
                         
                         // Prueba de otro endpoint, por ejemplo, POST /activities
-                        sh 'curl -X POST -H "Content-Type: application/json" -d \'{"name":"New Activity"}\' http://localhost:8080/activities'
+                        sh 'curl -X POST -H "Content-Type: application/json" -d \'{"name":"New Activity"}\' http://localhost:8083/activities'
                         
                     } catch (Exception err) {
                         error("Error en las pruebas de integración. Verifica los endpoints.")
